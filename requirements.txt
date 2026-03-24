@@ -2,5 +2,4 @@ streamlit
 pandas
 matplotlib
 seaborn
-mariadb
-random
+
