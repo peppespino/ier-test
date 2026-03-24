@@ -1,9 +1,13 @@
 import streamlit as st
-import mariadb
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+try:
+    import mariadb
+    DB_ATTIVO = True
+except:
+    DB_ATTIVO = False
 # --------------------------------------------------
 # CONNESSIONE AL DATABASE
 # --------------------------------------------------
