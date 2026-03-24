@@ -12,13 +12,15 @@ except:
 # CONNESSIONE AL DATABASE
 # --------------------------------------------------
 def get_connection():
-    return mariadb.connect(
-        host="localhost",
-        user="python_user",
-        password="password123",
-        database="case_dati"
-    )
-
+    if DB_ATTIVO:
+        return mariadb.connect(
+            host="localhost",
+            user="python_user",
+            password="password123",
+            database="case_dati"
+        )
+    else:
+        return None
 # --------------------------------------------------
 # FUNZIONE PER CARICARE I DATI
 # --------------------------------------------------
