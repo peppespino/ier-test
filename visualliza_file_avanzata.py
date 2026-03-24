@@ -2,7 +2,11 @@ import os
 import random
 import pandas as pd
 from datetime import datetime, timedelta
-import mariadb
+try:
+    import mariadb
+    DB_ATTIVO = True
+except:
+    DB_ATTIVO = False
 
 # --------------------------------------------------
 # CONFIGURAZIONE
