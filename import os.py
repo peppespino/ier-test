@@ -26,36 +26,45 @@ def get_connection():
 # --------------------------------------------------
 def load_data(casa=None, start_time=None, end_time=None):
     conn = get_connection()
+
+    # --- SE NON C'È DATABASE (Streamlit Cloud) ---
+    if conn is None:
+        df = pd.read_csv("dati_case.csv")
+
+        df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
+
+        return df
+
+    # --- SE IL DATABASE ESISTE (locale) ---
     cursor = conn.cursor()
-    
+
     query = "SELECT * FROM dati_casa WHERE 1=1"
     params = []
 
     if casa and casa != "Tutte":
         query += " AND casa=?"
         params.append(casa)
-    
+
     if start_time:
         query += " AND data>=?"
         params.append(start_time)
-    
+
     if end_time:
         query += " AND data<=?"
         params.append(end_time)
-    
+
     cursor.execute(query, tuple(params))
-    
+
     cols = [desc[0] for desc in cursor.description]
     dati = cursor.fetchall()
+
     df = pd.DataFrame(dati, columns=cols)
-    
+
     cursor.close()
     conn.close()
-    
-    # converte colonna data in datetime
-    if not df.empty:
-        df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
-    
+
+    df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
+
     return df
 
 # --------------------------------------------------
