@@ -1,138 +1,131 @@
-import streamlit as st
-import mariadb
+import os
+import random
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+from datetime import datetime, timedelta
+import mariadb
 
 # --------------------------------------------------
-# CONNESSIONE AL DATABASE
+# CONFIGURAZIONE
 # --------------------------------------------------
-def get_connection():
-    return mariadb.connect(
-        host="localhost",
-        user="python_user",
-        password="password123",
-        database="case_dati"
-    )
+OUTPUT_FOLDER = "dataset_case"
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# --------------------------------------------------
-# FUNZIONE PER CARICARE I DATI
-# --------------------------------------------------
-def load_data(casa=None, start_time=None, end_time=None):
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    query = "SELECT * FROM dati_casa WHERE 1=1"
-    params = []
-
-    if casa and casa != "Tutte":
-        query += " AND casa=?"
-        params.append(casa)
-    
-    if start_time:
-        query += " AND data>=?"
-        params.append(start_time)
-    
-    if end_time:
-        query += " AND data<=?"
-        params.append(end_time)
-    
-    cursor.execute(query, tuple(params))
-    
-    cols = [desc[0] for desc in cursor.description]
-    dati = cursor.fetchall()
-    df = pd.DataFrame(dati, columns=cols)
-    
-    cursor.close()
-    conn.close()
-    
-    # converte colonna data in datetime
-    if not df.empty:
-        df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
-    
-    return df
+CASE = ["casa1", "casa2", "casa3"]
+START_DATE = datetime(2026,3,23,0,0)
+END_DATE = datetime(2026,3,29,23,55)
+STEP = timedelta(minutes=5)
 
 # --------------------------------------------------
-# STREAMLIT - INTERFACCIA AVANZATA
+# FUNZIONI DATI
 # --------------------------------------------------
-st.title("Dashboard Avanzata Case IoT")
+def next_temperature(prev_temp, hour):
+    if 6 <= hour <= 20:
+        delta = random.uniform(-0.4,1)
+    else:
+        delta = random.uniform(-1,0.4)
+    new_temp = prev_temp + delta
+    new_temp = max(prev_temp - 1, min(prev_temp + 1, new_temp))
+    return round(max(-10, min(40, new_temp)),1)
 
-# --- Filtri ---
-case_options = ["Tutte", "casa1", "casa2", "casa3"]
-casa = st.selectbox("Seleziona casa", case_options)
+def random_lights():
+    return random.randint(0,1), random.randint(0,1), random.randint(0,1)
 
-start_date = st.text_input("Data inizio (YYYYMMDDHHMM)", "")
-end_date = st.text_input("Data fine (YYYYMMDDHHMM)", "")
+def random_fault():
+    if random.random() < 0.03:
+        sensors = ["temperatura","luce1","luce2","luce3"]
+        return random.sample(sensors, random.randint(1,4))
+    return []
 
-campo = st.selectbox("Mostra solo valori particolari", ["Tutti", "Guasti", "Energia > valore", "Temperatura > valore"])
-valore = None
-if "valore" in campo:
-    valore = st.number_input("Inserisci valore di riferimento", value=0)
+# --------------------------------------------------
+# DATABASE MariaDB
+# --------------------------------------------------
+def insert_into_db(record):
+    try:
+        conn = mariadb.connect(
+            host="localhost",
+            user="python_user",
+            password="password123",
+            database="case_dati"
+        )
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO dati_casa 
+            (casa,data,temperatura_appartamento,stato_luce1,stato_luce2,stato_luce3,
+             energia_consumata_giornaliera_appartamento,potenza_istantanea_consumata_appartamento,guasto)
+            VALUES (?,?,?,?,?,?,?,?,?)
+        """, (
+            record["casa"],
+            record["data"],
+            record["temperatura_appartamento"],
+            record["stato_luce1"],
+            record["stato_luce2"],
+            record["stato_luce3"],
+            record["energia_consumata_giornaliera_appartamento"],
+            record["potenza_istantanea_consumata_appartamento"],
+            record["guasto"]
+        ))
+        conn.commit()
+    except mariadb.Error as e:
+        print(f"Errore DB: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
-# --- Carica dati ---
-df = load_data(
-    casa=casa, 
-    start_time=start_date if start_date else None, 
-    end_time=end_date if end_date else None
-)
+# --------------------------------------------------
+# GENERAZIONE DATI
+# --------------------------------------------------
+all_data = []
 
-# --- Filtri avanzati ---
-if campo == "Guasti":
-    df = df[df["guasto"] != ""]
-elif campo == "Energia > valore" and valore is not None:
-    df = df[df["energia_consumata_giornaliera_appartamento"] > valore]
-elif campo == "Temperatura > valore" and valore is not None:
-    df = df[df["temperatura_appartamento"] > valore]
+for house_name in CASE:
+    house_folder = os.path.join(OUTPUT_FOLDER, house_name)
+    os.makedirs(house_folder, exist_ok=True)
+    
+    current_time = START_DATE
+    temperature = random.uniform(16,22)
+    daily_energy = 0
 
-# --- Visualizzazione tabella ---
-st.subheader("Dati filtrati")
-st.dataframe(df)
+    while current_time <= END_DATE:
+        if current_time.hour==0 and current_time.minute==0:
+            daily_energy = 0
 
-# --- Grafico temperatura a 5 minuti ---
-# crea una copia dei dati validi
-df_temp = df[df["temperatura_appartamento"] != -999]
+        temperature = next_temperature(temperature,current_time.hour)
+        luce1, luce2, luce3 = random_lights()
+        power = random.randint(20,250)
+        daily_energy += power*(5/60)
+        faults = random_fault()
 
-st.subheader("Grafico temperatura (ogni 5 minuti)")
-if not df_temp.empty:
-    plt.figure(figsize=(12,4))
-    sns.lineplot(data=df_temp, x="data", y="temperatura_appartamento", hue="casa")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    fig = plt.gcf()
-    st.pyplot(fig)
+        temp_value = temperature if "temperatura" not in faults else -999
+        luce1 = luce1 if "luce1" not in faults else -999
+        luce2 = luce2 if "luce2" not in faults else -999
+        luce3 = luce3 if "luce3" not in faults else -999
+        fault_string = ", ".join(faults)
 
-# --- Energia giornaliera ---
-if not df.empty:
-    df_daily = df.copy()
-    df_daily['giorno'] = df_daily['data'].dt.date  # estrai solo il giorno
+        record = {
+            "casa": house_name,
+            "data": current_time.strftime("%Y%m%d%H%M"),
+            "temperatura_appartamento": temp_value,
+            "stato_luce1": luce1,
+            "stato_luce2": luce2,
+            "stato_luce3": luce3,
+            "energia_consumata_giornaliera_appartamento": int(daily_energy),
+            "potenza_istantanea_consumata_appartamento": power,
+            "guasto": fault_string
+        }
 
-    # energia totale giornaliera per casa
-    energia_giornaliera = df_daily.groupby(['casa', 'giorno'])['energia_consumata_giornaliera_appartamento'].max().reset_index()
+        # salva .txt
+        filename = f"{house_name}_{record['data']}.txt"
+        with open(os.path.join(house_folder, filename),"w") as f:
+            f.write(str(record))
 
-    # delta e percentuale giorno su giorno
-    energia_giornaliera['delta'] = energia_giornaliera.groupby('casa')['energia_consumata_giornaliera_appartamento'].diff()
-    energia_giornaliera['delta_percent'] = energia_giornaliera.groupby('casa')['energia_consumata_giornaliera_appartamento'].pct_change() * 100
+        # inserisci in MariaDB
+        insert_into_db(record)
 
-    # --- Visualizzazione tabella giornaliera ---
-    st.subheader("Energia giornaliera e variazioni")
-    st.dataframe(
-        energia_giornaliera.style.format({
-            'energia_consumata_giornaliera_appartamento': '{:.0f}',
-            'delta': '{:.0f}',
-            'delta_percent': '{:.1f}%'
-        }).background_gradient(subset=['delta_percent'], cmap='RdYlGn_r')
-    )
+        # aggiungi per CSV
+        all_data.append(record)
 
-    # --- Grafico a barre giornaliero ---
-    st.subheader("Grafico consumi giornalieri per casa")
-    fig3, ax3 = plt.subplots(figsize=(12,4))
-    sns.barplot(
-        data=energia_giornaliera,
-        x='giorno',
-        y='energia_consumata_giornaliera_appartamento',
-        hue='casa',
-        ax=ax3
-    )
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    st.pyplot(fig3)
+        current_time += STEP
+
+# salva CSV
+df = pd.DataFrame(all_data)
+df.to_csv(os.path.join(OUTPUT_FOLDER,"dati_case.csv"), index=False)
+print("Dati generati: .txt, DB e CSV pronti.")
