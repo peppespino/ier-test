@@ -40,14 +40,15 @@ def load_data(casa=None, start_time=None, end_time=None):
             df = df[df["casa"] == casa]
 
         # filtro data inizio
-# ---- filtro data inizio ----
+        # ---- filtro data inizio ----
         if start_time is not None:
-    start_time = pd.to_datetime(start_time)
-    df = df[df["data"] >= start_time]
-# ---- filtro data fine ----
-        if start_time is not None:
-    start_time = pd.to_datetime(start_time)
-    df = df[df["data"] >= start_time]
+            start_time = pd.to_datetime(start_time)
+            df = df[df["data"] >= start_time]
+        
+        # ---- filtro data fine ----
+        if end_time is not None:
+            end_time = pd.to_datetime(end_time) + pd.Timedelta(days=1)
+            df = df[df["data"] < end_time]
 
         return df
 
