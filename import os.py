@@ -105,8 +105,8 @@ with col2:
 case_options = ["Tutte", "casa1", "casa2", "casa3"]
 casa = st.selectbox("Seleziona casa", case_options)
 
-start_date = st.text_input("Data inizio (YYYYMMDDHHMM)", "")
-end_date = st.text_input("Data fine (YYYYMMDDHHMM)", "")
+start_date = st.date_input("Data inizio")
+end_date = st.date_input("Data fine")
 
 campo = st.selectbox("Mostra solo valori particolari", ["Tutti", "Guasti", "Energia > valore", "Temperatura > valore"])
 valore = None
