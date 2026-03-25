@@ -27,8 +27,7 @@ def get_connection():
 def load_data(casa=None, start_time=None, end_time=None):
     conn = get_connection()
 
-    # --- SE NON C'È DATABASE (Streamlit Cloud) ---
-    if conn is None:
+if conn is None:
     df = pd.read_csv("dati_case.csv")
 
     df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
