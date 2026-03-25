@@ -36,6 +36,10 @@ if not st.session_state.loggato:
             st.error("Username o password sbagliati")
 
     st.stop()
+if st.button("Logout"):
+    st.session_state.loggato = False
+    st.session_state.case_permesse = []
+    st.rerun()
 # --------------------------------------------------
 # CONNESSIONE AL DATABASE
 # --------------------------------------------------
