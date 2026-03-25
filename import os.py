@@ -40,11 +40,14 @@ def load_data(casa=None, start_time=None, end_time=None):
 
         # filtro data inizio
         if start_time:
-            df = df[df["data"] >= pd.to_datetime(start_time, format="%Y%m%d%H%M")]
+            start_time = pd.to_datetime(start_time, errors="coerce")
+            if pd.notna(start_time):
+                df = df[df["data"] >= start_time]
 
-        # filtro data fine
         if end_time:
-            df = df[df["data"] <= pd.to_datetime(end_time, format="%Y%m%d%H%M")]
+            end_time = pd.to_datetime(end_time, errors="coerce")
+            if pd.notna(end_time):
+                df = df[df["data"] <= end_time]
 
         return df
 
