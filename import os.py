@@ -76,7 +76,7 @@ with col1:
     st.image("logo.png", width=120)
 
 with col2:
-    st.title("Dashboard Avanzata Case IoT")
+    st.title("Test Dashboard Gestione Abitazioni")
 
 # --- Filtri ---
 case_options = ["Tutte", "casa1", "casa2", "casa3"]
