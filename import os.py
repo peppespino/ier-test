@@ -29,11 +29,23 @@ def load_data(casa=None, start_time=None, end_time=None):
 
     # --- SE NON C'È DATABASE (Streamlit Cloud) ---
     if conn is None:
-        df = pd.read_csv("dati_case.csv")
+    df = pd.read_csv("dati_case.csv")
 
-        df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
+    df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
 
-        return df
+    # filtro casa
+    if casa and casa != "Tutte":
+        df = df[df["casa"] == casa]
+
+    # filtro data inizio
+    if start_time:
+        df = df[df["data"] >= pd.to_datetime(start_time, format="%Y%m%d%H%M")]
+
+    # filtro data fine
+    if end_time:
+        df = df[df["data"] <= pd.to_datetime(end_time, format="%Y%m%d%H%M")]
+
+    return df
 
     # --- SE IL DATABASE ESISTE (locale) ---
     cursor = conn.cursor()
@@ -88,7 +100,7 @@ end_date = st.text_input("Data fine (YYYYMMDDHHMM)", "")
 campo = st.selectbox("Mostra solo valori particolari", ["Tutti", "Guasti", "Energia > valore", "Temperatura > valore"])
 valore = None
 if "valore" in campo:
-    valore = st.number_input("Inserisci valore di riferimento", value=0)
+    valore = st.number_input("Inserisci valore di riferimento", value=0.0)
 
 # --- Carica dati ---
 df = load_data(
