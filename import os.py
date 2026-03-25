@@ -107,7 +107,7 @@ if "valore" in campo:
     valore = st.number_input("Inserisci valore di riferimento", value=0.0)
 
 # --- Carica dati ---
-)
+
 df = load_data(
     casa=casa,
     start_time=start_date,
