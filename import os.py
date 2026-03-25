@@ -25,28 +25,30 @@ def get_connection():
 # FUNZIONE PER CARICARE I DATI
 # --------------------------------------------------
 def load_data(casa=None, start_time=None, end_time=None):
+
     conn = get_connection()
 
-if conn is None:
-    df = pd.read_csv("dati_case.csv")
+    # --------- CASO STREAMLIT CLOUD (usa CSV) ----------
+    if conn is None:
+        df = pd.read_csv("dati_case.csv")
 
-    df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
+        df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
 
-    # filtro casa
-    if casa and casa != "Tutte":
-        df = df[df["casa"] == casa]
+        # filtro casa
+        if casa and casa != "Tutte":
+            df = df[df["casa"] == casa]
 
-    # filtro data inizio
-    if start_time:
-        df = df[df["data"] >= pd.to_datetime(start_time, format="%Y%m%d%H%M")]
+        # filtro data inizio
+        if start_time:
+            df = df[df["data"] >= pd.to_datetime(start_time, format="%Y%m%d%H%M")]
 
-    # filtro data fine
-    if end_time:
-        df = df[df["data"] <= pd.to_datetime(end_time, format="%Y%m%d%H%M")]
+        # filtro data fine
+        if end_time:
+            df = df[df["data"] <= pd.to_datetime(end_time, format="%Y%m%d%H%M")]
 
-    return df
+        return df
 
-    # --- SE IL DATABASE ESISTE (locale) ---
+    # --------- CASO LOCALE (usa MariaDB) ----------
     cursor = conn.cursor()
 
     query = "SELECT * FROM dati_casa WHERE 1=1"
