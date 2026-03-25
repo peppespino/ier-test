@@ -33,6 +33,7 @@ def load_data(casa=None, start_time=None, end_time=None):
         df = pd.read_csv("dati_case.csv")
 
         df["data"] = pd.to_datetime(df["data"], format="%Y%m%d%H%M")
+        df["guasto"] = df["guasto"].fillna("")
 
         # filtro casa
         if casa and casa != "Tutte":
