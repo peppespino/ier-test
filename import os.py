@@ -41,20 +41,13 @@ def load_data(casa=None, start_time=None, end_time=None):
 
         # filtro data inizio
 # ---- filtro data inizio ----
-        if start_time is not None and start_time != "":
-            try:
-                start_time = pd.to_datetime(str(start_time))
-                df = df[df["data"] >= start_time]
-            except:
-                pass
-
+        if start_time is not None:
+    start_time = pd.to_datetime(start_time)
+    df = df[df["data"] >= start_time]
 # ---- filtro data fine ----
-        if end_time is not None and end_time != "":
-            try:
-                end_time = pd.to_datetime(str(end_time))
-                df = df[df["data"] <= end_time]
-            except:
-                pass
+        if start_time is not None:
+    start_time = pd.to_datetime(start_time)
+    df = df[df["data"] >= start_time]
 
         return df
 
