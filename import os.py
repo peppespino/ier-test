@@ -70,7 +70,7 @@ def load_data(casa=None, start_time=None, end_time=None):
 # --------------------------------------------------
 # STREAMLIT - INTERFACCIA AVANZATA
 # --------------------------------------------------
-st.title("Dashboard Avanzata Case IoT")
+st.title("Test Dashboard Gestione Abitazioni")
 
 # --- Filtri ---
 case_options = ["Tutte", "casa1", "casa2", "casa3"]
