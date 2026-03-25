@@ -8,6 +8,34 @@ try:
     DB_ATTIVO = True
 except:
     DB_ATTIVO = False
+    
+# --------------------------------------------------
+# UTENTI E PERMESSI
+# --------------------------------------------------
+UTENTI = {
+    "admin": {"password": "admin123", "case": ["casa1", "casa2", "casa3"]},
+    "user1": {"password": "user123", "case": ["casa1", "casa2"]},
+    "user2": {"password": "user123", "case": ["casa1", "casa3"]},
+}
+
+if "loggato" not in st.session_state:
+    st.session_state.loggato = False
+
+if not st.session_state.loggato:
+    st.title("Login")
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Accedi"):
+        if username in UTENTI and UTENTI[username]["password"] == password:
+            st.session_state.loggato = True
+            st.session_state.case_permesse = UTENTI[username]["case"]
+            st.rerun()
+        else:
+            st.error("Username o password sbagliati")
+
+    st.stop()
 # --------------------------------------------------
 # CONNESSIONE AL DATABASE
 # --------------------------------------------------
@@ -96,7 +124,7 @@ with col2:
     st.title("Test Dashboard Gestione Abitazioni")
 
 # --- Filtri ---
-case_options = ["Tutte", "casa1", "casa2", "casa3"]
+case_options = ["Tutte"] + st.session_state.case_permesse
 casa = st.selectbox("Seleziona casa", case_options)
 start_date = st.date_input("Data inizio", value=None)
 end_date = st.date_input("Data fine", value=None)
@@ -113,6 +141,7 @@ df = load_data(
     start_time=start_date,
     end_time=end_date
 )
+df = df[df["casa"].isin(st.session_state.case_permesse)]
 # --- Filtri avanzati ---
 if campo == "Guasti":
     df = df[df["guasto"] != ""]
