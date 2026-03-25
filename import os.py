@@ -107,12 +107,12 @@ if "valore" in campo:
     valore = st.number_input("Inserisci valore di riferimento", value=0.0)
 
 # --- Carica dati ---
-df = load_data(
-    casa=casa, 
-    start_time=start_date if start_date else None, 
-    end_time=end_date if end_date else None
 )
-
+df = load_data(
+    casa=casa,
+    start_time=start_date,
+    end_time=end_date
+)
 # --- Filtri avanzati ---
 if campo == "Guasti":
     df = df[df["guasto"] != ""]
